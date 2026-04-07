@@ -170,7 +170,7 @@ module.exports.main = function main(param) {
 			bd.position = new vec2((x + w / 2) / 50, (y + h / 2) / 50);
 			var fd = new fixtureDef();
 			fd.density = 1.0;
-			fd.friction = 0.8;
+			fd.friction = 0.55;
 			fd.restitution = 0.1;
 			fd.shape = new polygonShape();
 			fd.shape.SetAsBox((w / 2) / 50, (h / 2) / 50);
@@ -182,9 +182,10 @@ module.exports.main = function main(param) {
 			bd.type = bodyType.b2_dynamicBody;
 			bd.position = new vec2(x / 50, y / 50);
 			bd.fixedRotation = true;
+			bd.allowSleep = false;
 			var fd = new fixtureDef();
 			fd.density = 1.0;
-			fd.friction = 0.4;
+			fd.friction = 0.25;
 			fd.restitution = 0.0;
 			fd.shape = new box2d.Box2DWeb.Collision.Shapes.b2CircleShape(r / 50);
 			var body = world.world.CreateBody(bd);
@@ -379,6 +380,25 @@ module.exports.main = function main(param) {
 			};
 		}
 
+		function isPlayerStandingOnSurface(px, py, vy, tolerance) {
+			if (vy < -0.6 || vy > 1.2) return false;
+			var footY = py + playerBodyRadius;
+			for (var gi = 0; gi < platforms.length; gi++) {
+				var pf = platforms[gi];
+				if (px >= pf.x - playerBodyRadius && px <= pf.x + pf.w + playerBodyRadius) {
+					if (Math.abs(footY - pf.y) <= tolerance) {
+						return true;
+					}
+				}
+			}
+			if (px >= -playerBodyRadius && px <= g.game.width + playerBodyRadius) {
+				if (Math.abs(footY - groundY) <= tolerance) {
+					return true;
+				}
+			}
+			return false;
+		}
+
 		function launchPlayerToward(point) {
 			var playerScreenPos = getPlayerScreenPosition();
 			var aimX = point.x - playerScreenPos.x;
@@ -445,6 +465,9 @@ module.exports.main = function main(param) {
 		var wasGrounded = false;
 		var canRecoverAirJump = true;
 		var facingLeft = false;
+		var airStuckFrames = 0;
+		var lastAirX = playerStartX;
+		var lastAirY = playerStartY;
 
 		var resultBg = new g.FilledRect({ scene: scene, x: 180, y: 180, width: g.game.width - 360, height: 260, cssColor: "rgba(0,0,0,0.7)" });
 		resultBg.hide(); scene.append(resultBg);
@@ -456,7 +479,11 @@ module.exports.main = function main(param) {
 		scene.onPointDownCapture.add(function (ev) {
 			if (ended) return;
 			if (elapsed < introDuration || elapsed >= introDuration + playDuration) return;
-			var grounded = wasGrounded;
+			var inputPos = playerBody.GetPosition();
+			var inputPx = inputPos.x * 50;
+			var inputPy = inputPos.y * 50;
+			var inputVy = playerBody.GetLinearVelocity().y;
+			var grounded = wasGrounded || isPlayerStandingOnSurface(inputPx, inputPy, inputVy, 14);
 			if (!grounded && airJumpStock <= 0) {
 				return;
 			}
@@ -532,29 +559,32 @@ module.exports.main = function main(param) {
 			}
 			player.modified();
 
-			var groundedNow = false;
-			if (vy > -0.6 && vy < 0.6) {
-				var footY = py + playerBodyRadius;
-				for (var gi = 0; gi < platforms.length; gi++) {
-					var pf = platforms[gi];
-					if (px >= pf.x - playerBodyRadius && px <= pf.x + pf.w + playerBodyRadius) {
-						if (Math.abs(footY - pf.y) <= 6) {
-							groundedNow = true;
-							break;
-						}
-					}
-				}
-				if (!groundedNow && px >= -playerBodyRadius && px <= g.game.width + playerBodyRadius) {
-					if (Math.abs(footY - groundY) <= 6) {
-						groundedNow = true;
-					}
-				}
-			}
+			var groundedNow = isPlayerStandingOnSurface(px, py, vy, 12);
 			if (!wasGrounded && groundedNow && canRecoverAirJump) {
 				airJumpStock = airJumpMax;
 			}
 			if (!groundedNow) {
 				canRecoverAirJump = true;
+				var dxAir = px - lastAirX;
+				var dyAir = py - lastAirY;
+				var speedSq = vxNow * vxNow + vy * vy;
+				var movedSq = dxAir * dxAir + dyAir * dyAir;
+				if (speedSq < 0.04 && movedSq < 0.25) {
+					airStuckFrames += 1;
+				} else {
+					airStuckFrames = 0;
+				}
+				if (airStuckFrames >= 8) {
+					playerBody.SetAwake(true);
+					playerBody.SetLinearVelocity(new vec2(vxNow * 0.5, 2.0));
+					airStuckFrames = 0;
+				}
+				lastAirX = px;
+				lastAirY = py;
+			} else {
+				airStuckFrames = 0;
+				lastAirX = px;
+				lastAirY = py;
 			}
 			wasGrounded = groundedNow;
 
