@@ -3,10 +3,10 @@
 module.exports.main = function main(param) {
 	var scene = new g.Scene({
 		game: g.game,
-		assetIds: ["se", "jump_girl", "item_drink1", "item_drink2", "arrow", "background", "block", "dialog", "girl_face"]
+		assetIds: ["jump_girl", "item_drink1", "item_drink2", "arrow", "background", "block", "dialog", "girl_face", "bgm", "se_jump", "se_landing", "se_down", "se_item"]
 	});
 
-	var introDuration = 10;
+	var introDuration = 15;
 	var playDuration = 80;
 	var resultDuration = 5;
 	var totalTimeLimit = introDuration + playDuration + resultDuration;
@@ -32,6 +32,11 @@ module.exports.main = function main(param) {
 		var backgroundImage = scene.asset.getImageById("background");
 		var dialogImage = scene.asset.getImageById("dialog");
 		var faceImage = scene.asset.getImageById("girl_face");
+		var bgmAsset = scene.asset.getAudioById("bgm");
+		var jumpSeAsset = scene.asset.getAudioById("se_jump");
+		var landingSeAsset = scene.asset.getAudioById("se_landing");
+		var downSeAsset = scene.asset.getAudioById("se_down");
+		var itemSeAsset = scene.asset.getAudioById("se_item");
 
 		var font = new g.DynamicFont({
 			game: g.game,
@@ -71,13 +76,15 @@ module.exports.main = function main(param) {
 		});
 		scene.append(uiTop);
 
-		var heightLabel = new g.Label({ scene: scene, x: 16, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "高度: 0" });
-		scene.append(heightLabel);
-		var jumpPowerLabel = new g.Label({ scene: scene, x: 300, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "ジャンプ力: 1" });
+		var currentHeightLabel = new g.Label({ scene: scene, x: 16, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "現在高度: 0" });
+		scene.append(currentHeightLabel);
+		var maxHeightLabel = new g.Label({ scene: scene, x: 300, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "最高高度: 0" });
+		scene.append(maxHeightLabel);
+		var jumpPowerLabel = new g.Label({ scene: scene, x: 590, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "ジャンプ力: 1" });
 		scene.append(jumpPowerLabel);
-		var airJumpLabel = new g.Label({ scene: scene, x: 620, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "空中ジャンプ: 1/1" });
+		var airJumpLabel = new g.Label({ scene: scene, x: 840, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "空中ジャンプ: 1/1" });
 		scene.append(airJumpLabel);
-		var timeLabel = new g.Label({ scene: scene, x: 980, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "TIME: " + playDuration });
+		var timeLabel = new g.Label({ scene: scene, x: 1120, y: 16, font: font, fontSize: 28, textColor: "#203040", text: "TIME: " + playDuration });
 		scene.append(timeLabel);
 		var guideLabel = new g.Label({ scene: scene, x: 16, y: g.game.height - 44, font: font, fontSize: 24, textColor: "#203040", text: "タップでジャンプ。上へ登り続けよう" });
 		scene.append(guideLabel);
@@ -124,14 +131,15 @@ module.exports.main = function main(param) {
 		textRect.w = Math.min(textRect.w, g.game.width - textRect.x - 32);
 		textRect.h = Math.min(textRect.h, g.game.height - textRect.y - 16);
 		var dialogLines = [];
-		var dialogFontSize = 42;
+		var dialogFontSize = 40;
 		var dialogLineGap = 8;
 		var dialogLineHeight = dialogFontSize + dialogLineGap;
 		var dialogMessages = [
-			"よおおおおおおし！！！！！！！上まで飛ぶぞおおおおおお！！！！！！！！",
-			"タップでジャンプするからね！！！空中ジャンプも0になるまでできるよ！！！",
-			"あと、青のドリンクでジャンプ力が上がって、紫のドリンクで空中ジャンプ回数が増えるよ！！！",
-			"それじゃあぁぁぁ、いくぞおおおおおおおおお！！！！！！"
+			"よおおおおおおし！！！！！テッペンまで飛ぶぞおおおおおお！！！！！",
+			"タップした方向めがけてジャンプするよ！！",
+			"空中ジャンプも0になるまでできるよ！！回数は着地する時に回復するから安心して！！",
+			"青のドリンクでジャンプ力が上がって、紫のドリンクで空中ジャンプ回数が増えるよ！！",
+			"それじゃあぁぁぁ、いくぞおおおおおおおおお！！！！！"
 		];
 		var currentDialogIndex = -1;
 		var maxDialogCharsPerLine = Math.max(1, Math.floor(textRect.w / dialogFontSize));
@@ -163,6 +171,11 @@ module.exports.main = function main(param) {
 
 		updateDialogText(0);
 		scene.append(dialogLayer);
+
+		var bgmPlayer = bgmAsset.play();
+		if (bgmPlayer) {
+			bgmPlayer.changeVolume(0.35);
+		}
 
 		function createStaticRect(x, y, w, h) {
 			var bd = new pl();
@@ -205,6 +218,7 @@ module.exports.main = function main(param) {
 		var playerHalfW = Math.floor(playerWidth / 2);
 		var playerHalfH = Math.floor(playerHeight / 2);
 		var playerBodyRadius = Math.floor(Math.min(playerWidth, playerHeight) * 0.35);
+		var platformGripMargin = Math.max(6, Math.floor(playerBodyRadius * 0.35));
 		var playerVisualBottomOffset = playerBodyRadius - playerHalfH - 2;
 		var minPlatformGap = Math.ceil(playerHeight * 2.0);
 		var minAimUpwardPixels = Math.max(36, Math.floor(playerHeight * 0.4));
@@ -385,7 +399,7 @@ module.exports.main = function main(param) {
 			var footY = py + playerBodyRadius;
 			for (var gi = 0; gi < platforms.length; gi++) {
 				var pf = platforms[gi];
-				if (px >= pf.x - playerBodyRadius && px <= pf.x + pf.w + playerBodyRadius) {
+				if (px >= pf.x + platformGripMargin && px <= pf.x + pf.w - platformGripMargin) {
 					if (Math.abs(footY - pf.y) <= tolerance) {
 						return true;
 					}
@@ -393,6 +407,32 @@ module.exports.main = function main(param) {
 			}
 			if (px >= -playerBodyRadius && px <= g.game.width + playerBodyRadius) {
 				if (Math.abs(footY - groundY) <= tolerance) {
+					return true;
+				}
+			}
+			return false;
+		}
+
+		function resolvePlatformEdgeSnag(px, py, vx, vy) {
+			var footY = py + playerBodyRadius;
+			var edgeSnapTolerance = 14;
+			for (var gi = 0; gi < platforms.length; gi++) {
+				var pf = platforms[gi];
+				if (Math.abs(footY - pf.y) > edgeSnapTolerance) continue;
+				var leftEdgeZoneStart = pf.x - playerBodyRadius;
+				var leftEdgeZoneEnd = pf.x + platformGripMargin;
+				if (px >= leftEdgeZoneStart && px <= leftEdgeZoneEnd) {
+					playerBody.SetPosition(new vec2((pf.x - playerBodyRadius - 2) / 50, py / 50));
+					playerBody.SetAwake(true);
+					playerBody.SetLinearVelocity(new vec2(Math.min(vx, -1.2), Math.max(vy, 1.6)));
+					return true;
+				}
+				var rightEdgeZoneStart = pf.x + pf.w - platformGripMargin;
+				var rightEdgeZoneEnd = pf.x + pf.w + playerBodyRadius;
+				if (px >= rightEdgeZoneStart && px <= rightEdgeZoneEnd) {
+					playerBody.SetPosition(new vec2((pf.x + pf.w + playerBodyRadius + 2) / 50, py / 50));
+					playerBody.SetAwake(true);
+					playerBody.SetLinearVelocity(new vec2(Math.max(vx, 1.2), Math.max(vy, 1.6)));
 					return true;
 				}
 			}
@@ -425,6 +465,7 @@ module.exports.main = function main(param) {
 
 		var playerStartX = g.game.width / 2;
 		var playerStartY = groundY - playerBodyRadius;
+		var baseHeightY = playerStartY;
 		var playerBody = createDynamicCircle(playerStartX, playerStartY, playerBodyRadius);
 		var aimArrowAngle = 0;
 		var player = new g.Sprite({
@@ -468,13 +509,13 @@ module.exports.main = function main(param) {
 		var airStuckFrames = 0;
 		var lastAirX = playerStartX;
 		var lastAirY = playerStartY;
+		var airborneMinY = playerStartY;
+		var downSePlayed = false;
 
 		var resultBg = new g.FilledRect({ scene: scene, x: 180, y: 180, width: g.game.width - 360, height: 260, cssColor: "rgba(0,0,0,0.7)" });
 		resultBg.hide(); scene.append(resultBg);
 		var resultLabel = new g.Label({ scene: scene, x: 220, y: 230, font: font, fontSize: 40, textColor: "#ffffff", text: "" });
 		resultLabel.hide(); scene.append(resultLabel);
-		var retryLabel = new g.Label({ scene: scene, x: 220, y: 300, font: font, fontSize: 28, textColor: "#ffffff", text: "画面タップで終了" });
-		retryLabel.hide(); scene.append(retryLabel);
 
 		scene.onPointDownCapture.add(function (ev) {
 			if (ended) return;
@@ -489,6 +530,7 @@ module.exports.main = function main(param) {
 			}
 
 			launchPlayerToward(ev.point);
+			jumpSeAsset.play();
 
 			if (!grounded && airJumpStock > 0) {
 				airJumpStock -= 1;
@@ -506,7 +548,6 @@ module.exports.main = function main(param) {
 			resultLabel.text = "到達高度: " + Math.floor(maxHeight);
 			resultLabel.invalidate();
 			resultLabel.show();
-			retryLabel.show();
 		}
 
 		scene.onUpdate.add(function () {
@@ -563,8 +604,27 @@ module.exports.main = function main(param) {
 			if (!wasGrounded && groundedNow && canRecoverAirJump) {
 				airJumpStock = airJumpMax;
 			}
+			if (!wasGrounded && groundedNow) {
+				landingSeAsset.play();
+				airborneMinY = py;
+				downSePlayed = false;
+			}
 			if (!groundedNow) {
 				canRecoverAirJump = true;
+				if (resolvePlatformEdgeSnag(px, py, vxNow, vy)) {
+					var rescuedPos = playerBody.GetPosition();
+					px = rescuedPos.x * 50;
+					py = rescuedPos.y * 50;
+					vxNow = playerBody.GetLinearVelocity().x;
+					vy = playerBody.GetLinearVelocity().y;
+				}
+				if (py < airborneMinY) {
+					airborneMinY = py;
+				}
+				if (!downSePlayed && py - airborneMinY >= 1000) {
+					downSeAsset.play();
+					downSePlayed = true;
+				}
 				var dxAir = px - lastAirX;
 				var dyAir = py - lastAirY;
 				var speedSq = vxNow * vxNow + vy * vy;
@@ -596,6 +656,7 @@ module.exports.main = function main(param) {
 				if (dx * dx + dy * dy < hitR * hitR) {
 					items[i].active = false;
 					itemEntities[i].hide();
+					itemSeAsset.play();
 					if (items[i].type === "jump") {
 						jumpPowerLevel += 1;
 					} else {
@@ -612,10 +673,15 @@ module.exports.main = function main(param) {
 
 			generateUntil(py - 1400);
 
-			var currentHeight = Math.max(0, Math.floor(groundY - py));
-			if (currentHeight > maxHeight) maxHeight = currentHeight;
-			heightLabel.text = "高度: " + Math.floor(maxHeight);
-			heightLabel.invalidate();
+			var currentHeight = Math.max(0, Math.floor(baseHeightY - py));
+			if (currentHeight > maxHeight) {
+				maxHeight = currentHeight;
+				g.game.vars.gameState.score = Math.floor(maxHeight);
+			}
+			currentHeightLabel.text = "現在高度: " + currentHeight;
+			currentHeightLabel.invalidate();
+			maxHeightLabel.text = "最高高度: " + Math.floor(maxHeight);
+			maxHeightLabel.invalidate();
 			jumpPowerLabel.text = "ジャンプ力: " + jumpPowerLevel;
 			jumpPowerLabel.invalidate();
 			airJumpLabel.text = "空中ジャンプ: " + airJumpStock + "/" + airJumpMax;

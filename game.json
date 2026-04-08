@@ -4,18 +4,6 @@
 	"fps": 30,
 	"main": "./script/_bootstrap.js",
 	"assets": {
-		"se": {
-			"type": "audio",
-			"path": "audio/se",
-			"systemId": "sound",
-			"duration": 250,
-			"hint": {
-				"extensions": [
-					".aac",
-					".ogg"
-				]
-			}
-		},
 		"_bootstrap": {
 			"type": "script",
 			"path": "script/_bootstrap.js",
@@ -73,6 +61,66 @@
 			"path": "image/girl_face.png",
 			"width": 1303,
 			"height": 1206
+		},
+		"bgm": {
+			"type": "audio",
+			"path": "audio/bgm",
+			"systemId": "music",
+			"duration": 138162,
+			"hint": {
+				"extensions": [
+					".m4a",
+					".ogg"
+				]
+			}
+		},
+		"se_down": {
+			"type": "audio",
+			"path": "audio/se_down",
+			"systemId": "sound",
+			"duration": 3389,
+			"hint": {
+				"extensions": [
+					".m4a",
+					".ogg"
+				]
+			}
+		},
+		"se_jump": {
+			"type": "audio",
+			"path": "audio/se_jump",
+			"systemId": "sound",
+			"duration": 1000,
+			"hint": {
+				"extensions": [
+					".m4a",
+					".ogg"
+				]
+			}
+		},
+		"se_landing": {
+			"type": "audio",
+			"path": "audio/se_landing",
+			"systemId": "sound",
+			"duration": 337,
+			"hint": {
+				"extensions": [
+					".m4a",
+					".ogg"
+				]
+			}
+		},
+		"se_item": {
+			"type": "audio",
+			"path": "audio/se_item",
+			"systemId": "sound",
+			"duration": 500,
+			"hint": {
+				"extensions": [
+					".m4a",
+					".ogg"
+				]
+			}
 		}
 	},
 	"environment": {
@@ -82,7 +130,7 @@
 				"ranking"
 			],
 			"preferredSessionParameters": {
-				"totalTimeLimit": 95
+				"totalTimeLimit": 100
 			}
 		}
 	},
