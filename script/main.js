@@ -237,8 +237,8 @@ module.exports.main = function main(param) {
 		createStaticRect(0, groundY, g.game.width, 40);
 		worldLayer.append(new g.FilledRect({ scene: scene, x: 0, y: groundY, width: g.game.width, height: 40, cssColor: "#6b7a8f" }));
 
-		createStaticRect(-20, -6000, 20, worldBottom + 7000);
-		createStaticRect(g.game.width, -6000, 20, worldBottom + 7000);
+		createStaticRect(-20, -50000, 20, 100000 + worldBottom);
+		createStaticRect(g.game.width, -50000, 20, 100000 + worldBottom);
 
 		var platforms = [];
 		var platformEntities = [];
@@ -394,8 +394,7 @@ module.exports.main = function main(param) {
 			};
 		}
 
-		function isPlayerStandingOnSurface(px, py, vy, tolerance) {
-			if (vy < -0.6 || vy > 1.2) return false;
+		function hasPlayerGroundSupport(px, py, tolerance) {
 			var footY = py + playerBodyRadius;
 			for (var gi = 0; gi < platforms.length; gi++) {
 				var pf = platforms[gi];
@@ -411,6 +410,11 @@ module.exports.main = function main(param) {
 				}
 			}
 			return false;
+		}
+
+		function isPlayerStandingOnSurface(px, py, vy, tolerance) {
+			if (vy < -0.6 || vy > 1.2) return false;
+			return hasPlayerGroundSupport(px, py, tolerance);
 		}
 
 		function resolvePlatformEdgeSnag(px, py, vx, vy) {
@@ -433,6 +437,31 @@ module.exports.main = function main(param) {
 					playerBody.SetPosition(new vec2((pf.x + pf.w + playerBodyRadius + 2) / 50, py / 50));
 					playerBody.SetAwake(true);
 					playerBody.SetLinearVelocity(new vec2(Math.max(vx, 1.2), Math.max(vy, 1.6)));
+					return true;
+				}
+			}
+			return false;
+		}
+
+		function resolveBoundarySnag(px, py, vx, vy) {
+			var footY = py + playerBodyRadius;
+			var wallSnapTolerance = 18;
+			var isNearLeftWall = px <= playerBodyRadius + 4;
+			var isNearRightWall = px >= g.game.width - playerBodyRadius - 4;
+			if (!isNearLeftWall && !isNearRightWall) return false;
+			for (var gi = 0; gi < platforms.length; gi++) {
+				var pf = platforms[gi];
+				if (Math.abs(footY - pf.y) > wallSnapTolerance) continue;
+				if (isNearLeftWall) {
+					playerBody.SetPosition(new vec2((playerBodyRadius + 8) / 50, py / 50));
+					playerBody.SetAwake(true);
+					playerBody.SetLinearVelocity(new vec2(Math.max(vx, 1.5), Math.max(vy, 1.6)));
+					return true;
+				}
+				if (isNearRightWall) {
+					playerBody.SetPosition(new vec2((g.game.width - playerBodyRadius - 8) / 50, py / 50));
+					playerBody.SetAwake(true);
+					playerBody.SetLinearVelocity(new vec2(Math.min(vx, -1.5), Math.max(vy, 1.6)));
 					return true;
 				}
 			}
@@ -524,7 +553,7 @@ module.exports.main = function main(param) {
 			var inputPx = inputPos.x * 50;
 			var inputPy = inputPos.y * 50;
 			var inputVy = playerBody.GetLinearVelocity().y;
-			var grounded = wasGrounded || isPlayerStandingOnSurface(inputPx, inputPy, inputVy, 14);
+			var grounded = wasGrounded || (hasPlayerGroundSupport(inputPx, inputPy, 14) && inputVy <= 3.0);
 			if (!grounded && airJumpStock <= 0) {
 				return;
 			}
@@ -611,6 +640,13 @@ module.exports.main = function main(param) {
 			}
 			if (!groundedNow) {
 				canRecoverAirJump = true;
+				if (resolveBoundarySnag(px, py, vxNow, vy)) {
+					var boundaryRescuedPos = playerBody.GetPosition();
+					px = boundaryRescuedPos.x * 50;
+					py = boundaryRescuedPos.y * 50;
+					vxNow = playerBody.GetLinearVelocity().x;
+					vy = playerBody.GetLinearVelocity().y;
+				}
 				if (resolvePlatformEdgeSnag(px, py, vxNow, vy)) {
 					var rescuedPos = playerBody.GetPosition();
 					px = rescuedPos.x * 50;
