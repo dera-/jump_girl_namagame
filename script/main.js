@@ -184,7 +184,7 @@ module.exports.main = function main(param) {
 			var fd = new fixtureDef();
 			fd.density = 1.0;
 			fd.friction = 0.55;
-			fd.restitution = 0.1;
+			fd.restitution = 0.0;
 			fd.shape = new polygonShape();
 			fd.shape.SetAsBox((w / 2) / 50, (h / 2) / 50);
 			world.world.CreateBody(bd).CreateFixture(fd);
@@ -218,7 +218,7 @@ module.exports.main = function main(param) {
 		var playerHalfW = Math.floor(playerWidth / 2);
 		var playerHalfH = Math.floor(playerHeight / 2);
 		var playerBodyRadius = Math.floor(Math.min(playerWidth, playerHeight) * 0.35);
-		var platformGripMargin = Math.max(6, Math.floor(playerBodyRadius * 0.35));
+		var platformGripMargin = Math.max(3, Math.floor(playerBodyRadius * 0.18));
 		var playerVisualBottomOffset = playerBodyRadius - playerHalfH - 2;
 		var minPlatformGap = Math.ceil(playerHeight * 2.0);
 		var minAimUpwardPixels = Math.max(36, Math.floor(playerHeight * 0.4));
@@ -428,7 +428,7 @@ module.exports.main = function main(param) {
 				if (px >= leftEdgeZoneStart && px <= leftEdgeZoneEnd) {
 					playerBody.SetPosition(new vec2((pf.x - playerBodyRadius - 2) / 50, py / 50));
 					playerBody.SetAwake(true);
-					playerBody.SetLinearVelocity(new vec2(Math.min(vx, -1.2), Math.max(vy, 1.6)));
+					playerBody.SetLinearVelocity(new vec2(Math.min(vx, -0.8), Math.max(vy, 1.2)));
 					return true;
 				}
 				var rightEdgeZoneStart = pf.x + pf.w - platformGripMargin;
@@ -436,7 +436,7 @@ module.exports.main = function main(param) {
 				if (px >= rightEdgeZoneStart && px <= rightEdgeZoneEnd) {
 					playerBody.SetPosition(new vec2((pf.x + pf.w + playerBodyRadius + 2) / 50, py / 50));
 					playerBody.SetAwake(true);
-					playerBody.SetLinearVelocity(new vec2(Math.max(vx, 1.2), Math.max(vy, 1.6)));
+					playerBody.SetLinearVelocity(new vec2(Math.max(vx, 0.8), Math.max(vy, 1.2)));
 					return true;
 				}
 			}
@@ -455,17 +455,39 @@ module.exports.main = function main(param) {
 				if (isNearLeftWall) {
 					playerBody.SetPosition(new vec2((playerBodyRadius + 8) / 50, py / 50));
 					playerBody.SetAwake(true);
-					playerBody.SetLinearVelocity(new vec2(Math.max(vx, 1.5), Math.max(vy, 1.6)));
+					playerBody.SetLinearVelocity(new vec2(Math.max(vx, 0.9), Math.max(vy, 1.2)));
 					return true;
 				}
 				if (isNearRightWall) {
 					playerBody.SetPosition(new vec2((g.game.width - playerBodyRadius - 8) / 50, py / 50));
 					playerBody.SetAwake(true);
-					playerBody.SetLinearVelocity(new vec2(Math.min(vx, -1.5), Math.max(vy, 1.6)));
+					playerBody.SetLinearVelocity(new vec2(Math.min(vx, -0.9), Math.max(vy, 1.2)));
 					return true;
 				}
 			}
 			return false;
+		}
+
+		function prepareJumpEscape(px, py, vx, vy) {
+			var escaped = false;
+			if (resolveBoundarySnag(px, py, vx, vy)) {
+				var wallEscapedPos = playerBody.GetPosition();
+				px = wallEscapedPos.x * 50;
+				py = wallEscapedPos.y * 50;
+				vx = playerBody.GetLinearVelocity().x;
+				vy = playerBody.GetLinearVelocity().y;
+				escaped = true;
+			}
+			if (resolvePlatformEdgeSnag(px, py, vx, vy)) {
+				var edgeEscapedPos = playerBody.GetPosition();
+				px = edgeEscapedPos.x * 50;
+				py = edgeEscapedPos.y * 50;
+				escaped = true;
+			}
+			if (escaped) {
+				playerBody.SetPosition(new vec2(playerBody.GetPosition().x, (py - 4) / 50));
+				playerBody.SetAwake(true);
+			}
 		}
 
 		function launchPlayerToward(point) {
@@ -552,10 +574,14 @@ module.exports.main = function main(param) {
 			var inputPos = playerBody.GetPosition();
 			var inputPx = inputPos.x * 50;
 			var inputPy = inputPos.y * 50;
+			var inputVx = playerBody.GetLinearVelocity().x;
 			var inputVy = playerBody.GetLinearVelocity().y;
 			var grounded = wasGrounded || (hasPlayerGroundSupport(inputPx, inputPy, 14) && inputVy <= 3.0);
 			if (!grounded && airJumpStock <= 0) {
 				return;
+			}
+			if (!grounded) {
+				prepareJumpEscape(inputPx, inputPy, inputVx, inputVy);
 			}
 
 			launchPlayerToward(ev.point);
