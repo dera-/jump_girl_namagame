@@ -219,6 +219,7 @@ module.exports.main = function main(param) {
 		var playerHalfH = Math.floor(playerHeight / 2);
 		var playerBodyRadius = Math.floor(Math.min(playerWidth, playerHeight) * 0.35);
 		var platformGripMargin = Math.max(3, Math.floor(playerBodyRadius * 0.18));
+		var minWallPlatformGap = Math.ceil(playerWidth * 1.2);
 		var playerVisualBottomOffset = playerBodyRadius - playerHalfH - 2;
 		var minPlatformGap = Math.ceil(playerHeight * 2.0);
 		var minAimUpwardPixels = Math.max(36, Math.floor(playerHeight * 0.4));
@@ -272,6 +273,18 @@ module.exports.main = function main(param) {
 			platformEntities.push(e);
 		}
 
+		function normalizePlatformX(x, w) {
+			if (x < minWallPlatformGap) {
+				x = 0;
+			}
+			if (g.game.width - (x + w) < minWallPlatformGap) {
+				x = g.game.width - w;
+			}
+			if (x < 0) x = 0;
+			if (x > g.game.width - w) x = g.game.width - w;
+			return x;
+		}
+
 		function tryAddExtraPlatform(y, existingPlatforms) {
 			if (random.generate() > 0.72) return;
 			var w = 150 + Math.floor(random.generate() * 110);
@@ -311,6 +324,7 @@ module.exports.main = function main(param) {
 			if (chosen.right > chosen.left) {
 				x += Math.floor(random.generate() * (chosen.right - chosen.left + 1));
 			}
+			x = normalizePlatformX(x, w);
 			addPlatform(x, y, w, 24);
 		}
 
@@ -372,6 +386,7 @@ module.exports.main = function main(param) {
 				highestGeneratedY -= gap;
 				var w = 180 + Math.floor(random.generate() * 140);
 				var x = 40 + Math.floor(random.generate() * (g.game.width - w - 80));
+				x = normalizePlatformX(x, w);
 				addPlatform(x, highestGeneratedY, w, 24);
 				tryAddExtraPlatform(highestGeneratedY, [{ x: x, w: w }]);
 
