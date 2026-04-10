@@ -17,14 +17,14 @@
 		"item_drink1": {
 			"type": "image",
 			"path": "image/item_drink1.png",
-			"width": 1024,
-			"height": 1536
+			"width": 204,
+			"height": 307
 		},
 		"item_drink2": {
 			"type": "image",
 			"path": "image/item_drink2.png",
-			"width": 1024,
-			"height": 1536
+			"width": 204,
+			"height": 307
 		},
 		"jump_girl": {
 			"type": "image",
@@ -35,14 +35,8 @@
 		"arrow": {
 			"type": "image",
 			"path": "image/arrow.png",
-			"width": 1536,
-			"height": 1024
-		},
-		"background": {
-			"type": "image",
-			"path": "image/background.png",
-			"width": 1536,
-			"height": 1024
+			"width": 307,
+			"height": 204
 		},
 		"block": {
 			"type": "image",
@@ -50,17 +44,11 @@
 			"width": 27,
 			"height": 24
 		},
-		"dialog": {
-			"type": "image",
-			"path": "image/dialog.png",
-			"width": 1613,
-			"height": 467
-		},
 		"girl_face": {
 			"type": "image",
 			"path": "image/girl_face.png",
-			"width": 1303,
-			"height": 1206
+			"width": 521,
+			"height": 482
 		},
 		"bgm": {
 			"type": "audio",
@@ -114,13 +102,25 @@
 			"type": "audio",
 			"path": "audio/se_item",
 			"systemId": "sound",
-			"duration": 500,
+			"duration": 1334,
 			"hint": {
 				"extensions": [
 					".m4a",
 					".ogg"
 				]
 			}
+		},
+		"background": {
+			"type": "image",
+			"path": "image/background.jpg",
+			"width": 1536,
+			"height": 1024
+		},
+		"dialog": {
+			"type": "image",
+			"path": "image/dialog.jpg",
+			"width": 1613,
+			"height": 467
 		}
 	},
 	"environment": {

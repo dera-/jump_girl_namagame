@@ -228,7 +228,8 @@ module.exports.main = function main(param) {
 		var arrowHalfH = Math.floor(arrowHeight / 2);
 		var arrowOffsetY = playerHalfH + arrowHalfH + 8;
 
-		var itemScale = 1 / 20;
+		var targetItemHeight = Math.max(8, Math.floor(1536 / 20));
+		var itemScale = targetItemHeight / itemJumpImage.height;
 		var itemW = Math.max(8, Math.floor(itemJumpImage.width * itemScale));
 		var itemH = Math.max(8, Math.floor(itemJumpImage.height * itemScale));
 		var itemHalfW = Math.floor(itemW / 2);
