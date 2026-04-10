@@ -247,6 +247,10 @@ module.exports.main = function main(param) {
 		var itemEntities = [];
 		var highestGeneratedY = groundY - 140;
 		var lastItemBand = -1;
+		var guaranteedAirMilestones = [
+			{ height: 1000, placed: false },
+			{ height: 4000, placed: false }
+		];
 
 		function addPlatform(x, y, w, h) {
 			createStaticRect(x, y, w, h);
@@ -345,6 +349,25 @@ module.exports.main = function main(param) {
 			itemEntities.push(e);
 		}
 
+		function addGuaranteedAirItemOnPlatform(pf) {
+			var ix = pf.x + Math.floor(pf.w / 2);
+			var minItemX = pf.x + itemHalfW + 12;
+			var maxItemX = pf.x + pf.w - itemHalfW - 12;
+			if (ix < minItemX) ix = minItemX;
+			if (ix > maxItemX) ix = maxItemX;
+			addItem(ix, pf.y - itemHalfH, "air");
+		}
+
+		function placeGuaranteedAirItems(primaryPlatform) {
+			var currentHeight = groundY - primaryPlatform.y;
+			for (var i = 0; i < guaranteedAirMilestones.length; i++) {
+				if (!guaranteedAirMilestones[i].placed && currentHeight >= guaranteedAirMilestones[i].height) {
+					addGuaranteedAirItemOnPlatform(primaryPlatform);
+					guaranteedAirMilestones[i].placed = true;
+				}
+			}
+		}
+
 		function spawnItemsForBand(bandIndex, bandTopY, bandBottomY) {
 			var count = 1 + Math.floor(random.generate() * 3);
 			for (var n = 0; n < count; n++) {
@@ -388,6 +411,7 @@ module.exports.main = function main(param) {
 				var x = 40 + Math.floor(random.generate() * (g.game.width - w - 80));
 				x = normalizePlatformX(x, w);
 				addPlatform(x, highestGeneratedY, w, 24);
+				placeGuaranteedAirItems({ x: x, y: highestGeneratedY, w: w });
 				tryAddExtraPlatform(highestGeneratedY, [{ x: x, w: w }]);
 
 				var bandIndex = Math.floor((groundY - highestGeneratedY) / g.game.height);
