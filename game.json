@@ -130,19 +130,8 @@
 				"ranking"
 			],
 			"preferredSessionParameters": {
-				"totalTimeLimit": 100
+				"totalTimeLimit": 105
 			}
 		}
-	},
-	"globalScripts": [
-		"node_modules/@akashic-extension/akashic-box2d/lib/Box2D.js",
-		"node_modules/@akashic-extension/akashic-box2d/lib/ContactManager.js",
-		"node_modules/@akashic-extension/akashic-box2d/lib/index.js",
-		"node_modules/@akashic-extension/akashic-box2d/lib/parameters.js",
-		"node_modules/box2dweb/box2d.js"
-	],
-	"moduleMainScripts": {
-		"@akashic-extension/akashic-box2d": "node_modules/@akashic-extension/akashic-box2d/lib/index.js",
-		"box2dweb": "node_modules/box2dweb/box2d.js"
 	}
 }
